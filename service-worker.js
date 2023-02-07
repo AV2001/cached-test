@@ -28,7 +28,15 @@ self.addEventListener('fetch', (e) => {
       console.log(`[Service Worker] Fetching resource: ${e.request.url}`);
 
       // 'r' is the matching file if it exists in the cache
-      return r;
+      return (
+        r ||
+        fetch(e.request).then((response) => {
+          return caches.open(cacheName).then((cache) => {
+            cache.put(e.request, response.clone());
+            return response;
+          });
+        })
+      );
     })
   );
 });
