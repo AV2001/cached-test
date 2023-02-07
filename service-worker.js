@@ -24,14 +24,14 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((r) => {
+    caches.match(e.request).then(function (r) {
       console.log(`[Service Worker] Fetching resource: ${e.request.url}`);
 
       // 'r' is the matching file if it exists in the cache
       return (
         r ||
-        fetch(e.request).then((response) => {
-          return caches.open(cacheName).then((cache) => {
+        fetch(e.request).then(function (response) {
+          return caches.open(cacheName).then(function (cache) {
             cache.put(e.request, response.clone());
             return response;
           });
