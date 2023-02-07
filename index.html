@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pet Depot</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.10/dist/vue.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="manifest" href="petstore.webmanifest" />
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1 v-text="sitename"></h1>
+        <button v-on:click="showCheckout">
+          {{ cartItemCount }}
+          <span class="fas fa-cart-plus"></span>
+          Checkout
+        </button>
+      </header>
+      <main>
+        <div v-if="showProduct">
+          <h2>Products</h2>
+
+          <div class="product" v-for="product in products">
+            <figure>
+              <img
+                v-bind:src="product.image"
+                alt="product image"
+                height="150"
+                width="auto"
+              />
+            </figure>
+            <!-- product information -->
+            <h2 v-text="product.title"></h2>
+            <!-- Product Description -->
+            <p v-html="product.description"></p>
+            <!-- Price -->
+            <p>Price: {{product.price}}</p>
+            <!-- 'add to cart' button -->
+            <button
+              v-on:click="addToCart(product)"
+              v-if="canAddToCart(product)"
+            >
+              Add to cart
+            </button>
+            <button disabled="disabled" v-else>Add to cart</button>
+            <!-- inventory message -->
+            <span v-if="product.availableInventory === cartCount(product.id)">
+              Sold Out :(
+            </span>
+            <span
+              v-else-if="product.availableInventory - cartCount(product.id) < 5"
+            >
+              Only {{product.availableInventory - cartCount(product.id)}} left!
+            </span>
+            <span v-else> Buy Now! </span>
+
+            <div>
+              <span v-for="n in product.rating">★</span>
+              <span v-for="n in 5-product.rating">☆</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-else>
+          <h2>Checkout</h2>
+          <p>
+            <strong>First Name:</strong>
+            <input v-model.trim="order.firstName" />
+          </p>
+          <p>
+            <strong>Last Name: </strong>
+            <input v-model.trim="order.lastName" />
+          </p>
+          <p>
+            <strong>Address:</strong>
+            <input v-model="order.address" />
+          </p>
+          <p>
+            <strong>City:</strong>
+            <input v-model="order.city" />
+          </p>
+          <p>
+            <strong>State:</strong>
+            <!-- <select v-model="order.state">
+                        <option disabled value="">State</option>
+                        <option v-bind:value="states.AUH">AUH</option>
+                        <option v-bind:value="states.DXB">DXB</option>
+                        <option v-bind:value="states.SHJ">SHJ</option>
+                    </select> -->
+            <select v-model="order.state">
+              <option disabled value="">State</option>
+              <option v-for="(state, key) in states" v-bind:value="state">
+                {{key}}
+              </option>
+            </select>
+          </p>
+          <p>
+            <strong>Zip/Postal Code:</strong>
+            <input v-model.number="order.zip" type="number" />
+          </p>
+          <p>
+            <input
+              type="checkbox"
+              id="gift"
+              value="true"
+              v-model="order.gift"
+              v-bind:false-value="order.dontSendGift"
+              v-bind:true-value="order.sendGift"
+            />
+
+            <label for="gift">Ship as gift?</label>
+          </p>
+          <p>
+            <input type="radio" id="home" value="Home" v-model="order.method" />
+            <label for="home">Home</label>
+            <input
+              type="radio"
+              id="business"
+              value="business"
+              v-model="order.method"
+            />
+            <label for="business">Business</label>
+          </p>
+
+          <h2>Order Information:</h2>
+          <p>First Name: {{order.firstName}}</p>
+          <p>Last Name: {{order.lastName}}</p>
+          <p>Address: {{order.address}}</p>
+          <p>City: {{order.city}}</p>
+          <p>Zip Code: {{order.zip}}</p>
+          <p>State: {{order.state}}</p>
+          <p>Gift?: {{order.gift}}</p>
+          <p>Method: {{order.method}}</p>
+          <hr />
+          <button v-on:click="submitForm">Place Order</button>
+        </div>
+      </main>
+    </div>
+
+    <script src="products.js"></script>
+    <script>
+      var webstore = new Vue({
+        el: '#app',
+        data: {
+          sitename: 'Vue.JS Pet Depot',
+          products: products,
+          states: {
+            AUH: 'Abu Dhabi',
+            SHJ: 'Sharjah',
+            DXB: 'Dubai',
+          },
+          cart: [],
+          order: {
+            firstName: '',
+            lastName: '',
+            address: '',
+            city: '',
+            zip: '',
+            state: '',
+            method: 'Home',
+            gift: false,
+            sendGift: 'Send as a gift',
+            dontSendGift: 'Dont send as a gift',
+          },
+          showProduct: true,
+        },
+        methods: {
+          addToCart(product) {
+            this.cart.push(product.id);
+          },
+          showCheckout() {
+            this.showProduct = this.showProduct ? false : true;
+          },
+          submitForm() {
+            alert('Order Placed!');
+          },
+          canAddToCart: function (product) {
+            return product.availableInventory > this.cartCount(product.id);
+          },
+          cartCount(id) {
+            let count = 0;
+            for (let i = 0; i < this.cart.length; i++) {
+              if (this.cart[i] === id) {
+                count++;
+              }
+            }
+            return count;
+          },
+        },
+        computed: {
+          cartItemCount: function () {
+            return this.cart.length || '';
+          },
+          sortedProducts() {
+            let productsArray = this.products.slice(0);
+            function compare(a, b) {
+              if (a.price > b.price) {
+                return -1;
+              }
+              if (a.price < b.price) {
+                return 1;
+              }
+              return 0;
+            }
+            return productsArray.sort(compare);
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
